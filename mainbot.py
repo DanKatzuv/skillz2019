@@ -3,6 +3,9 @@ from elf_kingdom import *
 # Globals
 attack_elves = []
 defense_elves = []
+
+defense_portals = []
+attack_portals = []
 built = False
 
 
@@ -25,6 +28,22 @@ def handle_elves_types(game):
     global attack_elves, defense_elves
     attack_elves = living_elves[:(len(living_elves) / 2) + 1]
     defense_elves = living_elves[len(living_elves) / 2:]
+
+
+def summon_creatures(game):
+    if not built:
+        return
+    for portal in game.get_my_portals():
+        if is_portal_endangered(game, portal):
+            portal.summon_ice_troll()
+
+    for defense_portal in defense_portals:
+        if defense_portal.can_summon_ice_troll():
+            defense_portal.summon_ice_troll()
+
+    for attack_portal in attack_portals:
+        if attack_portal.can_summom_lava_giant():
+            attack_portal.summon_lava_giant()
 
 
 def is_portal_endangered(game, portal):
