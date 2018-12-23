@@ -1,9 +1,16 @@
 from elf_kingdom import *
 
+# Constants
+center = Location(1800, 3500)
+BUILD_THRESH = 100
+
 # Globals
+upper = False
+builds = {}
 attack_elves = []
 defense_elves = []
 built = False
+building_defense = False
 
 
 def do_turn(game):
@@ -13,35 +20,48 @@ def do_turn(game):
     :param game: the current game state.
     :type game: Game
     """
-    handle_elves_types(game)
-    build_defense_portals(game)
+    global upper
+    upper = game.get_my_castle().get_location().row > game.get_enemy_castle().get_location().row
+    handle_elves(game)
+    handle_builds()
     send_giants_to_enemy_castle(game)
     send_trolls_to_our_castle(game)
 
 
-def handle_elves_types(game):
-    """Assignes each Elf a role."""
-    living_elves = game.get_my_living_elves()
-    global attack_elves, defense_elves
-    attack_elves = living_elves[:(len(living_elves) / 2) + 1]
-    defense_elves = living_elves[len(living_elves) / 2:]
+def handle_elves(game):
+    build_defense_portal(game.get_my_living_elves()[0], game)
+    build_attack_portals(attack_elves, game)
 
 
-def build_defense_portals(game):
+def build_defense_portal(elf, game):
     """Build a Portal near the enemy Castle."""
-    global built
-    building_elf = attack_elves[0]
-    enemy_castle = game.get_enemy_castle()
-    enemy_castle_loc = enemy_castle.get_location()
-    portal_loc = Location(enemy_castle_loc.row, enemy_castle_loc.col + enemy_castle.size)
-    if not built:
-        if building_elf.get_location().distance(portal_loc) < (enemy_castle.size + 100):
-            built = True
+    global building_defense
+    if not building_defense:
+        global builds, upper
+        modifier = -1000
+        if not upper:
+            modifier = 1000
+        loc = Location(game.get_my_castle().get_location().row + modifier,
+                       game.get_my_castle().get_location().col - modifier)
+        print("Moving to {}".format(loc))
+        elf.move_to(loc)
+        builds[elf] = loc
+        building_defense = True
+
+
+def handle_builds():
+    global builds, BUILD_THRESH
+    for elf, loc in builds.items():
+        if elf.get_location().distance(loc) < BUILD_THRESH:
             print("Building portal")
-            building_elf.build_portal()
-            return  # Exit when a portal was built
-        print("Moving to {}".format(portal_loc))
-        building_elf.move_to(portal_loc)
+            elf.build_portal()
+            builds.pop(elf)
+        else:
+            elf.move_to(loc)
+
+
+def build_attack_portals(elves, game):
+    pass
 
 
 def send_giants_to_enemy_castle(game):
