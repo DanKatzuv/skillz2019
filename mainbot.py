@@ -27,6 +27,12 @@ def handle_elves_types(game):
     defense_elves = living_elves[len(living_elves) / 2:]
 
 
+def is_portal_endangered(game, portal):
+    """Return whether an enemy Elf is endangering a Portal."""
+    return any(portal.distance(enemy_elf.location) < game.elf_attack_range
+               for enemy_elf in game.get_enemy_living_elves())
+
+
 def build_defense_portals(game):
     """Build a Portal near the enemy Castle."""
     global built
