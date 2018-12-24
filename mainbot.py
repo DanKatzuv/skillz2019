@@ -1,4 +1,5 @@
 from elf_kingdom import *
+import math
 # Game constants
 CENTER = Location(1800, 3500) #default
 
@@ -17,20 +18,11 @@ builds = {}
 def setup(game):
     global CENTER
     CENTER = location_average(game.get_enemy_castle(), game.get_my_castle())
-        return
-    for portal in game.get_my_portals():
-        print portal.get_location()
-        if portal.get_location().distance(center) <= BUILD_THRESH:
-            print "Equals"
-            return
-    nearest_elf = min(game.get_my_living_elves(), key=lambda elf: elf.distance(center))
-    build_portal(nearest_elf, center)
 
 
 def do_turn(game):
     """
     Makes the bot run a single turn.
-
     :param game: the current game state.
     :type game: Game
     """
@@ -49,6 +41,19 @@ def do_turn(game):
     fix_center_portal(game)
 
 
+def fix_center_portal(game):
+    print game.get_my_living_elves()
+    if not game.get_my_living_elves():
+        return
+    for portal in game.get_my_portals():
+        print portal.get_location()
+        if portal.get_location().distance(CENTER) <= BUILD_THRESH:
+            print "Equals"
+            return
+    nearest_elf = min(game.get_my_living_elves(), key=lambda elf: elf.distance(CENTER))
+    build_portal(nearest_elf, CENTER)
+
+
 def nearest_target_for_elf(game, game_object):
     targets = game.get_enemy_portals() + game.get_enemy_living_elves()
     try:
@@ -59,7 +64,7 @@ def nearest_target_for_elf(game, game_object):
 
 def is_portal_endangered(game, portal):
     """Return whether an enemy Elf is endangering a Portal."""
-    return any(portal.distance(enemy_elf.location) < game.elf_attack_range
+    return any(portal.distance(enemy_elf.get_location()) < game.elf_attack_range
                for enemy_elf in game.get_enemy_living_elves())
 
 
