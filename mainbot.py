@@ -78,14 +78,7 @@ def portal_handling(game):
 def elf_attack_nearest_target(game):
     for elf in game.get_my_living_elves():
         print("cond: {}".format(elf not in builds and not elf.is_building))
-        if elf not in builds and not elf.is_building:
-            target = nearest_target_for_elf(game, elf)
-            if not target:
-                return
-            if elf.get_location().distance(target) < game.elf_attack_range:
-                elf.attack(target)
-            else:
-                elf.move_to(target)
+        attack_object(game, elf, nearest_target_for_elf(game, elf))  # tells the elf to attack the nearest target
 
 
 def handle_elves(game):
@@ -100,14 +93,6 @@ def handle_elves(game):
             build_portal(game.get_my_living_elves()[1], portals[1])
     except Exception as e:
         print(e)
-
-
-def build_portal(elf, loc):
-    """Build a Portal."""
-    global builds
-    print("Moving to {}".format(loc))
-    if elf not in builds:
-        builds[elf] = loc
 
 
 def handle_builds():
@@ -127,3 +112,29 @@ def handle_builds():
             continue
 
 
+### METHODS ###
+def build_portal(elf, loc):
+    """Build a Portal."""
+    global builds
+    print("Moving to {}".format(loc))
+    if elf not in builds:
+        builds[elf] = loc
+
+
+def attack_object(game, elf, obj):
+
+    if not obj or not elf.is_alive() or elf in builds or elf.is_building:
+        return
+    if elf.get_location().distance(obj) < game.elf_attack_range:
+        elf.attack(obj)
+    else:
+        elf.move_to(obj)
+
+
+### UTILITIES ###
+def location_average(l1, l2):
+    if not isinstance(l1, Location):
+        l1 = l1.get_location()
+    if not isinstance(l2, Location):
+        l2 = l2.get_location()
+    return Location((l1.row + l2.row) / 2, (l1.col + l2.col) / 2)
