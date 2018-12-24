@@ -19,6 +19,7 @@ def fix_center_portal(game):
     for portal in game.get_my_portals():
         print portal.get_location()
         if portal.get_location().distance(center) <= BUILD_THRESH:
+            print "Equals"
             return
     nearest_elf = min(game.get_my_living_elves(), key=lambda elf: elf.distance(center))
     build_portal(nearest_elf, center)
@@ -54,12 +55,6 @@ def is_portal_endangered(game, portal):
                for enemy_elf in game.get_enemy_living_elves())
 
 
-def is_portal_endangered2(game, portal):
-    """Return whether an enemy Elf is endangering a Portal."""
-    return any(portal.distance(enemy_elf.location) < (game.elf_attack_range + 1500)
-               for enemy_elf in game.get_enemy_living_elves())
-
-
 def portal_handling(game):
     if builds and game.get_my_mana() < 120:
         return
@@ -74,8 +69,7 @@ def portal_handling(game):
 
     for defense_portal in defense_portals:
         if defense_portal.can_summon_ice_troll():
-            if is_portal_endangered2(game, defense_portal):
-                defense_portal.summon_ice_troll()
+            defense_portal.summon_ice_troll()
     for attack_portal in attack_portals:
         if attack_portal.can_summon_lava_giant():
             attack_portal.summon_lava_giant()
@@ -131,3 +125,5 @@ def handle_builds():
                 elf.move_to(loc)
         except AttributeError:
             continue
+
+
