@@ -1,9 +1,10 @@
 from elf_kingdom import *
 
 # Constants
+CASTLE_DEFENCE_DISTANCE = 2150
 center = Location(1800, 3500)
 BUILD_THRESH = 100
-DEFENSE_PORTAL_DISTANCE = 2000
+DEFENSE_PORTAL_DISTANCE = 2000  # radius from the castle, in it all portals are defined as defence portals.
 portals_lower = [Location(1200, 4600), center]
 portals_upper = [Location(2500, 1500), center]
 
@@ -51,8 +52,13 @@ def nearest_target_for_elf(game, game_object):
 
 def is_portal_endangered(game, portal):
     """Return whether an enemy Elf is endangering a Portal."""
-    return any(portal.distance(enemy_elf.location) < game.elf_attack_range
-               for enemy_elf in game.get_enemy_living_elves())
+    return is_group_near_object(portal, game.get_enemy_living_elves(), (game.elf_attack_range + game.portal_size / 2) * 2)
+
+
+def is_group_near_object(friendly_object, enemy_list, distance):
+    """Return whether any of the list of enemies are near a friendly object."""
+    correct_group = [friendly_object.distance(enemy.location) < distance for enemy in enemy_list]
+    return any(correct_group)  # , correct_group
 
 
 def portal_handling(game):
@@ -67,9 +73,10 @@ def portal_handling(game):
         if is_portal_endangered(game, portal):
             portal.summon_ice_troll()
 
-    for defense_portal in defense_portals:
-        if defense_portal.can_summon_ice_troll():
-            defense_portal.summon_ice_troll()
+    if(is_group_near_object(game.get_my_castle(), game.get_enemy_living_elves() + game.get_enemy_lava_giants(), CASTLE_DEFENCE_DISTANCE)):
+        for defense_portal in defense_portals:
+            if defense_portal.can_summon_ice_troll():
+                defense_portal.summon_ice_troll()
     for attack_portal in attack_portals:
         if attack_portal.can_summon_lava_giant():
             attack_portal.summon_lava_giant()
