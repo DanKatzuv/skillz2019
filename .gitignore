@@ -15,7 +15,8 @@ yy# Created by https://www.gitignore.io/api/git,python,windows,pycharm,pycharm+i
 *_BASE_*.txt
 *_LOCAL_*.txt
 *_REMOTE_*.txt
-
+venv/*
+.idea/*
 ### PyCharm ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
