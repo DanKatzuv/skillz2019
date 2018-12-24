@@ -1,20 +1,22 @@
 from elf_kingdom import *
+# Game constants
+CENTER = Location(1800, 3500) #default
 
+setup_boolean = False
 # Constants
-center = Location(1800, 3500)
 BUILD_THRESH = 100
 DEFENSE_PORTAL_DISTANCE = 2000
-portals_lower = [Location(1200, 4600), center]
-portals_upper = [Location(2500, 1500), center]
+portals_lower = [Location(1200, 4600), Location(1800, 3500)]
+portals_upper = [Location(2500, 1500), Location(1800, 3500)]
 
 # Globals
 upper = False
 builds = {}
 
 
-def fix_center_portal(game):
-    print game.get_my_living_elves()
-    if not game.get_my_living_elves():
+def setup(game):
+    global CENTER
+    CENTER = location_average(game.get_enemy_castle(), game.get_my_castle())
         return
     for portal in game.get_my_portals():
         print portal.get_location()
@@ -32,7 +34,13 @@ def do_turn(game):
     :param game: the current game state.
     :type game: Game
     """
+    global setup_boolean
     global upper
+
+    if not setup_boolean:
+        setup(game)
+        setup_boolean = True
+
     upper = game.get_my_castle().get_location().row > game.get_enemy_castle().get_location().row
     handle_elves(game)
     handle_builds()
