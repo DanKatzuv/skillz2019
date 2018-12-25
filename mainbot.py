@@ -11,13 +11,15 @@ portals_lower = [Location(1200, 4600), Location(1800, 3500)]
 portals_upper = [Location(2500, 1500), Location(1800, 3500)]
 
 # Globals
-upper = False
+IS_PURPLE_TEAM = False
 builds = {}
 
 
 def setup(game):
-    global CENTER
+    global CENTER, IS_PURPLE_TEAM
     CENTER = location_average(game.get_enemy_castle(), game.get_my_castle())
+    IS_PURPLE_TEAM = game.get_my_castle().get_location().row > game.get_enemy_castle().get_location().row
+
 
 
 def do_turn(game):
@@ -27,18 +29,52 @@ def do_turn(game):
     :type game: Game
     """
     global setup_boolean
-    global upper
 
     if not setup_boolean:
         setup(game)
         setup_boolean = True
-
-    upper = game.get_my_castle().get_location().row > game.get_enemy_castle().get_location().row
-    handle_elves(game)
-    handle_builds()
-    portal_handling(game)
+    handle_elves(game)  # Whether the elves should build
+    portal_handling(game)  # Generating creatures
     elf_attack_nearest_target(game)
     fix_center_portal(game)
+
+
+def handle_elves(game):
+    if not game.get_my_living_elves():
+        return
+    portals = portals_upper if IS_PURPLE_TEAM else portals_lower
+    if len(game.get_my_portals()) <= 1 or len(game.get_my_living_elves()) < 2:
+        try:
+            build_portal(game.get_my_living_elves()[0], portals[0])
+            if len(game.get_my_portals()) <= 2:  # TODO: understand this
+                build_portal(game.get_my_living_elves()[1], portals[1])
+        except Exception as e:
+            print(e)
+    handle_builds()
+    elf_attack_nearest_target(game)
+
+
+def handle_builds():
+    global builds, BUILD_THRESH
+    for elf, loc in builds.items():
+        print elf
+        if elf is None:
+            continue
+        try:
+            if elf.get_location().distance(loc) < BUILD_THRESH:
+                print("Building portal")
+                elf.build_portal()
+                builds.pop(elf)
+            else:
+                elf.move_to(loc)
+        except AttributeError:
+            continue
+
+
+def elf_attack_nearest_target(game):
+    for elf in game.get_my_living_elves():
+        print("cond: {}".format(elf not in builds and not elf.is_building))
+        attack_object(game, elf, nearest_target_for_elf(game, elf))  # tells the elf to attack the nearest target
 
 
 def fix_center_portal(game):
@@ -86,43 +122,6 @@ def portal_handling(game):
     for attack_portal in attack_portals:
         if attack_portal.can_summon_lava_giant():
             attack_portal.summon_lava_giant()
-
-
-def elf_attack_nearest_target(game):
-    for elf in game.get_my_living_elves():
-        print("cond: {}".format(elf not in builds and not elf.is_building))
-        attack_object(game, elf, nearest_target_for_elf(game, elf))  # tells the elf to attack the nearest target
-
-
-def handle_elves(game):
-    if not game.get_my_living_elves():
-        return
-    portals = portals_upper if upper else portals_lower
-    if len(game.get_my_portals()) > 1 and len(game.get_my_living_elves()) == 2:
-        return
-    try:
-        build_portal(game.get_my_living_elves()[0], portals[0])
-        if len(game.get_my_portals()) <= 2:
-            build_portal(game.get_my_living_elves()[1], portals[1])
-    except Exception as e:
-        print(e)
-
-
-def handle_builds():
-    global builds, BUILD_THRESH
-    for elf, loc in builds.items():
-        print elf
-        if elf is None:
-            continue
-        try:
-            if elf.get_location().distance(loc) < BUILD_THRESH:
-                print("Building portal")
-                elf.build_portal()
-                builds.pop(elf)
-            else:
-                elf.move_to(loc)
-        except AttributeError:
-            continue
 
 
 ### METHODS ###
