@@ -178,8 +178,11 @@ def attack_object(game, elf, obj):
 
 ### UTILITIES ###
 def location_average(l1, l2):
-    if not isinstance(l1, Location):
-        l1 = l1.get_location()
-    if not isinstance(l2, Location):
-        l2 = l2.get_location()
-    return Location((l1.row + l2.row) / 2, (l1.col + l2.col) / 2)
+    """
+    Return the average location of two points
+    :param l1: first object
+    :param l2: second object
+    :return: the average between the location of both objects, as a Location class
+    """
+    return Location((l1.get_location().row + l2.get_location().row) / 2,
+                    (l1.get_location().col + l2.get_location().col) / 2)
