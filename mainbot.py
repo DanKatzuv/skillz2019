@@ -75,12 +75,10 @@ def handle_builds():
 
     global elves_building, BUILD_THRESH
     for elf, loc in elves_building.items():
-        print elf
         if elf is None:
             continue
         try:
             if elf.get_location().distance(loc) < BUILD_THRESH:
-                print("Building portal")
                 elf.build_portal()
                 elves_building.pop(elf)
             else:
@@ -97,20 +95,16 @@ def elf_attack_nearest_target(game):
     :type game: Game
     """
     for elf in game.get_my_living_elves():
-        print("cond: {}".format(elf not in elves_building and not elf.is_building))
         if elf not in elves_building and not elf.is_building:
             attack_object(game, elf, nearest_target_for_elf(game, elf))  # tells the elf to attack the nearest target
 
 
 def fix_center_portal(game):
     """Run the build method on the cener portal if it is broken"""
-    print game.get_my_living_elves()
     if not game.get_my_living_elves():
         return
     for portal in game.get_my_portals():
-        print portal.get_location()
         if portal.get_location().distance(our_portal_locations[1]) <= BUILD_THRESH:
-            print "Equals"
             return
     nearest_elf = min(game.get_my_living_elves(), key=lambda elf: elf.distance(our_portal_locations[1]))
     build_portal(nearest_elf, our_portal_locations[1])
@@ -163,7 +157,6 @@ def portal_handling(game):
 def build_portal(elf, loc):
     """Build a Portal."""
     global elves_building
-    print("Moving to {}".format(loc))
     if elf not in elves_building:
         elves_building[elf] = loc
 
