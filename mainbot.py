@@ -42,8 +42,7 @@ def do_turn(game):
 
     handle_elves(game)  # Whether the elves should build
     portal_handling(game)  # Generating creatures
-    elf_attack_nearest_target(game)
-    fix_center_portal(game)
+    fix_center_portal(game)  # fix the center portal if its broken TODO: change this temporary method
 
 
 def handle_elves(game):
@@ -66,7 +65,7 @@ def handle_elves(game):
             print(e)
 
     handle_builds()
-    elf_attack_nearest_target(game)
+    elf_attack_nearest_target(game)  # Elf attacking nearest important target
 
 
 def handle_builds():
