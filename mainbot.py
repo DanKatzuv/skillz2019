@@ -109,11 +109,11 @@ def fix_center_portal(game):
         return
     for portal in game.get_my_portals():
         print portal.get_location()
-        if portal.get_location().distance(CENTER) <= BUILD_THRESH:
+        if portal.get_location().distance(our_portal_locations[1]) <= BUILD_THRESH:
             print "Equals"
             return
-    nearest_elf = min(game.get_my_living_elves(), key=lambda elf: elf.distance(CENTER))
-    build_portal(nearest_elf, CENTER)
+    nearest_elf = min(game.get_my_living_elves(), key=lambda elf: elf.distance(our_portal_locations[1]))
+    build_portal(nearest_elf, our_portal_locations[1])
 
 
 def nearest_target_for_elf(game, friendly_object):
