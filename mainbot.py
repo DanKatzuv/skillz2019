@@ -4,7 +4,7 @@ import math
 CENTER = Location(1800, 3500) #default before calculation
 our_portal_locations = []  # current preset locations (game reads our team color and assigns this to the correct array.
 
-setup_boolean = True  # prevent the setup from running more than once TODO: replace with a turn counter
+# setup_boolean = True  # prevent the setup from running more than once TODO: replace with a turn counter
 
 # Constants
 CASTLE_DEFENCE_DISTANCE = 2150  # alarm distance, if enemies enter it the distance defence measures are taken.
@@ -14,6 +14,8 @@ portals_lower = [Location(1200, 4600), Location(1800, 3500)]  # preset locations
 portals_upper = [Location(2500, 1500), Location(1800, 3500)]  # preset locations of portals when our color is blue
 
 # Globals
+TURN_COUNT = 1
+
 IS_PURPLE_TEAM = False  # is our team on the top right corner (is our color purple)
 elves_building = {}  # dict of the elves building a portal. used to govern mana usage and prevent elf overtasking.
                      # the key in the dictionary is the elf, its value is the location it wants to build at.
@@ -26,13 +28,12 @@ def setup(game):
     :param game: the current game state.
     :type game: Game
     """
-    global CENTER, IS_PURPLE_TEAM, setup_boolean, our_portal_locations
+    global CENTER, IS_PURPLE_TEAM, our_portal_locations
 
     CENTER = location_average(game.get_enemy_castle(), game.get_my_castle())
     IS_PURPLE_TEAM = game.get_my_castle().get_location().row > game.get_enemy_castle().get_location().row
 
     our_portal_locations = portals_upper if IS_PURPLE_TEAM else portals_lower
-    setup_boolean = False
 
 
 def do_turn(game):
@@ -42,12 +43,14 @@ def do_turn(game):
     :param game: the current game state.
     :type game: Game
     """
-    if setup_boolean:
+    global TURN_COUNT
+    if TURN_COUNT == 1:
         setup(game)
 
     handle_elves(game)  # Whether the elves should build
     portal_handling(game)  # Generating creatures
     fix_center_portal(game)  # fix the center portal if its broken TODO: change this temporary method
+    TURN_COUNT += 1
 
 
 def handle_elves(game):
