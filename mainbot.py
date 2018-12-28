@@ -1,7 +1,8 @@
 from elf_kingdom import *
 import math
+
 # Game constants
-CENTER = Location(1800, 3500) #default before calculation
+CENTER = Location(1800, 3500)  # default before calculation
 our_portal_locations = []  # current preset locations (game reads our team color and assigns this to the correct array.
 
 # setup_boolean = True  # prevent the setup from running more than once TODO: replace with a turn counter
@@ -20,7 +21,7 @@ TURN_COUNT = 1
 
 IS_PURPLE_TEAM = False  # is our team on the top right corner (is our color purple)
 elves_building = {}  # dict of the elves building a portal. used to govern mana usage and prevent elf overtasking.
-                     # the key in the dictionary is the elf, its value is the location it wants to build at.
+# the key in the dictionary is the elf, its value is the location it wants to build at.
 portal_delays = {}  # the key in the dictionary is the portal, and the value is the turns since last summon.
 
 
@@ -136,7 +137,8 @@ def nearest_target_for_elf(game, friendly_object):
 
 def is_portal_endangered(game, portal):
     """Return whether an enemy Elf is endangering a Portal."""
-    return is_group_near_object(portal, game.get_enemy_living_elves(), (game.elf_attack_range + game.portal_size / 2) * 2)
+    return is_group_near_object(portal, game.get_enemy_living_elves(),
+                                (game.elf_attack_range + game.portal_size / 2) * 2)
 
 
 def is_group_near_object(friendly_object, enemy_list, distance):
@@ -166,17 +168,20 @@ def portal_handling(game):
         if is_portal_endangered(game, portal):
             portal.summon_ice_troll()
 
-    if is_group_near_object(game.get_my_castle(), game.get_enemy_living_elves() + game.get_enemy_lava_giants(), CASTLE_DEFENCE_DISTANCE):
+    if is_group_near_object(game.get_my_castle(), game.get_enemy_living_elves() + game.get_enemy_lava_giants(),
+                            CASTLE_DEFENCE_DISTANCE):
         for defense_portal in defense_portals:
-            if defense_portal.can_summon_ice_troll() and portal_delays[defense_portal] == ICE_TROLL_DELAY:
+            print("{} delay in {} portal".format(portal_delays[defense_portal], defense_portal))
             if defense_portal.can_summon_ice_troll() and portal_delays[defense_portal] >= ICE_TROLL_DELAY:
                 portal_delays[defense_portal] = 0
                 defense_portal.summon_ice_troll()
 
     for attack_portal in attack_portals:
-        if attack_portal.can_summon_lava_giant() and portal_delays[attack_portal] == LAVA_GIANT_DELAY:
+        print("{} delay in {} portal".format(portal_delays[attack_portal], attack_portal))
         if attack_portal.can_summon_lava_giant() and portal_delays[attack_portal] >= LAVA_GIANT_DELAY:
             portal_delays[attack_portal] = 0
+            print("{} summoning".format(attack_portal))
+
             attack_portal.summon_lava_giant()
 
     for portal in portal_delays:  # add one turn to all portal delays.
