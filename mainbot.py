@@ -13,12 +13,15 @@ BUILD_THRESH = 100  # threshold where the elf will build in when trying to build
 portals_lower = [Location(1200, 4600), Location(1800, 3500)]  # preset locations of portals when our color is orange
 portals_upper = [Location(2500, 1500), Location(1800, 3500)]  # preset locations of portals when our color is blue
 
+ICE_TROLL_DELAY = 5
+LAVA_GIANT_DELAY = 5
 # Globals
 TURN_COUNT = 1
 
 IS_PURPLE_TEAM = False  # is our team on the top right corner (is our color purple)
 elves_building = {}  # dict of the elves building a portal. used to govern mana usage and prevent elf overtasking.
                      # the key in the dictionary is the elf, its value is the location it wants to build at.
+portal_delays = {}  # the key in the dictionary is the portal, and the value is the turns since last summon.
 
 
 def setup(game):
@@ -147,6 +150,14 @@ def portal_handling(game):
     if elves_building and game.get_my_mana() < 120:
         return
 
+    for portal in game.get_my_portals():  # remove all portals that are destroyed
+        if portal not in portal_delays:
+            portal_delays[portal] = 0
+
+    for portal in portal_delays:  # remove all portals that are destroyed
+        if portal not in game.get_my_portals():
+            portal_delays[portal] = -1
+
     defense_portals = [portal for portal in game.get_my_portals() if
                        game.get_my_castle().distance(portal) < DEFENSE_PORTAL_DISTANCE]
     attack_portals = [portal for portal in game.get_my_portals() if portal not in defense_portals]
@@ -155,13 +166,21 @@ def portal_handling(game):
         if is_portal_endangered(game, portal):
             portal.summon_ice_troll()
 
-    if(is_group_near_object(game.get_my_castle(), game.get_enemy_living_elves() + game.get_enemy_lava_giants(), CASTLE_DEFENCE_DISTANCE)):
+    if is_group_near_object(game.get_my_castle(), game.get_enemy_living_elves() + game.get_enemy_lava_giants(), CASTLE_DEFENCE_DISTANCE):
         for defense_portal in defense_portals:
-            if defense_portal.can_summon_ice_troll():
+            if defense_portal.can_summon_ice_troll() and portal_delays[defense_portal] == ICE_TROLL_DELAY:
+            if defense_portal.can_summon_ice_troll() and portal_delays[defense_portal] >= ICE_TROLL_DELAY:
+                portal_delays[defense_portal] = 0
                 defense_portal.summon_ice_troll()
+
     for attack_portal in attack_portals:
-        if attack_portal.can_summon_lava_giant():
+        if attack_portal.can_summon_lava_giant() and portal_delays[attack_portal] == LAVA_GIANT_DELAY:
+        if attack_portal.can_summon_lava_giant() and portal_delays[attack_portal] >= LAVA_GIANT_DELAY:
+            portal_delays[attack_portal] = 0
             attack_portal.summon_lava_giant()
+
+    for portal in portal_delays:  # add one turn to all portal delays.
+        portal_delays[portal] += 1
 
 
 ### METHODS ###
