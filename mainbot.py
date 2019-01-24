@@ -1,20 +1,26 @@
 from elf_kingdom import *
 import math
-# Game constants
-CENTER = Location(1800, 3500) #default before calculation
 
-setup_boolean = True  # prevent the setup from running more than once TODO: replace with a turn counter
-# Constants
-BUILD_THRESH = 100  # threshold where the elf will build in when trying to build a portal.
-DEFENSE_PORTAL_DISTANCE = 2000  # the radius from the castle, in it all portals are defined as defence portals.
-portals_lower = [Location(1200, 4600), Location(1800, 3500)]  # preset locations of portals when our color is orange
-portals_upper = [Location(2500, 1500), Location(1800, 3500)]  # preset locations of portals when our color is blue
+# Game constants
+CENTER = Location(1800, 3500)  # default before calculation
 our_portal_locations = []  # current preset locations (game reads our team color and assigns this to the correct array.
 
+# Constants
+CASTLE_DEFENCE_DISTANCE = 2150  # alarm distance, if enemies enter it the distance defence measures are taken.
+DEFENSE_PORTAL_DISTANCE = 2000  # radius from the castle, in it all portals are defined as defence portals.
+BUILD_THRESH = 100  # threshold where the elf will build in when trying to build a portal.
+portals_lower = [Location(1200, 4600), Location(1800, 3500)]  # preset locations of portals when our color is orange
+portals_upper = [Location(2500, 1500), Location(1800, 3500)]  # preset locations of portals when our color is blue
+
+ICE_TROLL_DELAY = 5
+LAVA_GIANT_DELAY = 5
 # Globals
+TURN_COUNT = 1
+
 IS_PURPLE_TEAM = False  # is our team on the top right corner (is our color purple)
 elves_building = {}  # dict of the elves building a portal. used to govern mana usage and prevent elf overtasking.
-                     # the key in the dictionary is the elf, its value is the location it wants to build at.
+# the key in the dictionary is the elf, its value is the location it wants to build at.
+portal_delays = {}  # the key in the dictionary is the portal, and the value is the turns since last summon.
 
 
 def setup(game):
@@ -24,13 +30,12 @@ def setup(game):
     :param game: the current game state.
     :type game: Game
     """
-    global CENTER, IS_PURPLE_TEAM, setup_boolean, our_portal_locations
+    global CENTER, IS_PURPLE_TEAM, our_portal_locations
 
     CENTER = location_average(game.get_enemy_castle(), game.get_my_castle())
     IS_PURPLE_TEAM = game.get_my_castle().get_location().row > game.get_enemy_castle().get_location().row
 
     our_portal_locations = portals_upper if IS_PURPLE_TEAM else portals_lower
-    setup_boolean = False
 
 
 def do_turn(game):
@@ -40,12 +45,14 @@ def do_turn(game):
     :param game: the current game state.
     :type game: Game
     """
-    if setup_boolean:
+    global TURN_COUNT
+    if TURN_COUNT == 1:
         setup(game)
 
     handle_elves(game)  # Whether the elves should build
     portal_handling(game)  # Generating creatures
     fix_center_portal(game)  # fix the center portal if its broken TODO: change this temporary method
+    TURN_COUNT += 1
 
 
 def handle_elves(game):
@@ -128,14 +135,28 @@ def nearest_target_for_elf(game, friendly_object):
 
 def is_portal_endangered(game, portal):
     """Return whether an enemy Elf is endangering a Portal."""
-    return any(portal.distance(enemy_elf.get_location()) < game.elf_attack_range
-               for enemy_elf in game.get_enemy_living_elves())
+    return is_group_near_object(portal, game.get_enemy_living_elves(),
+                                (game.elf_attack_range + game.portal_size / 2) * 2)
+
+
+def is_group_near_object(friendly_object, enemy_list, distance):
+    """Return whether any of the list of enemies are near a friendly object."""
+    correct_group = [friendly_object.distance(enemy.location) < distance for enemy in enemy_list]
+    return any(correct_group)  # , correct_group
 
 
 def portal_handling(game):
     """Decide what portals produce what creatures."""
     if elves_building and game.get_my_mana() < 120:
         return
+
+    for portal in game.get_my_portals():  # remove all portals that are destroyed
+        if portal not in portal_delays:
+            portal_delays[portal] = 0
+
+    for portal in portal_delays:  # remove all portals that are destroyed
+        if portal not in game.get_my_portals():
+            portal_delays[portal] = -1
 
     defense_portals = [portal for portal in game.get_my_portals() if
                        game.get_my_castle().distance(portal) < DEFENSE_PORTAL_DISTANCE]
@@ -145,12 +166,24 @@ def portal_handling(game):
         if is_portal_endangered(game, portal):
             portal.summon_ice_troll()
 
-    for defense_portal in defense_portals:
-        if defense_portal.can_summon_ice_troll():
-            defense_portal.summon_ice_troll()
+    if is_group_near_object(game.get_my_castle(), game.get_enemy_living_elves() + game.get_enemy_lava_giants(),
+                            CASTLE_DEFENCE_DISTANCE):
+        for defense_portal in defense_portals:
+            print("{} delay in {} portal".format(portal_delays[defense_portal], defense_portal))
+            if defense_portal.can_summon_ice_troll() and portal_delays[defense_portal] >= ICE_TROLL_DELAY:
+                portal_delays[defense_portal] = 0
+                defense_portal.summon_ice_troll()
+
     for attack_portal in attack_portals:
-        if attack_portal.can_summon_lava_giant():
+        print("{} delay in {} portal".format(portal_delays[attack_portal], attack_portal))
+        if attack_portal.can_summon_lava_giant() and portal_delays[attack_portal] >= LAVA_GIANT_DELAY:
+            portal_delays[attack_portal] = 0
+            print("{} summoning".format(attack_portal))
+
             attack_portal.summon_lava_giant()
+
+    for portal in portal_delays:  # add one turn to all portal delays.
+        portal_delays[portal] += 1
 
 
 ### METHODS ###
