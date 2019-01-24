@@ -5,8 +5,6 @@ import math
 CENTER = Location(1800, 3500)  # default before calculation
 our_portal_locations = []  # current preset locations (game reads our team color and assigns this to the correct array.
 
-# setup_boolean = True  # prevent the setup from running more than once TODO: replace with a turn counter
-
 # Constants
 CASTLE_DEFENCE_DISTANCE = 2150  # alarm distance, if enemies enter it the distance defence measures are taken.
 DEFENSE_PORTAL_DISTANCE = 2000  # radius from the castle, in it all portals are defined as defence portals.
